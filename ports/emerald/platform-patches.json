@@ -1,0 +1,361 @@
+{
+  "upstream_commit": "3c35e5b957dff6c578878031e0c4a7c8d7691401",
+  "gameplay": "vanilla",
+  "files": [
+    {
+      "path": "src/main.c",
+      "source_sha256": "e4e1e815c8f83fb206c1a42aab965f7ffb8bf9d668b57313b00abd4d621b245e",
+      "result_sha256": "51dc0d486753e088f6f4b3034a97bc94d546c70c7e1f63107212705a47a32b67",
+      "edits": [
+        {
+          "start": 475,
+          "end": 475,
+          "replacement": "    // The command bytes belong to both cry players, including chorus tracks.\n    // A finished PCM channel is not necessarily a finished command stream.\n    // Stop the owners before clearing, then retire flags so AllContinue cannot\n    // restart a stream whose storage has been invalidated.\n    for (u32 i = 0; i < MAX_POKEMON_CRIES; ++i)\n    {\n        m4aMPlayStop(&gPokemonCryMusicPlayers[i]);\n        gPokemonCryTracks[i * 2].flags = 0;\n        gPokemonCryTracks[i * 2 + 1].flags = 0;\n    }\n"
+        },
+        {
+          "start": 477,
+          "end": 477,
+          "replacement": "\nconst char peaq_emerald_tutorial[8][10][41] = {\n{\"CONTROLS\",\"TURN PHONE 90 DEGREES COUNTERCLOCKWISE.\",\"8: A   7: B   #: START   *: SELECT\"},{\"SHOULDER BUTTONS\",\"5: L   0: R\",\"DIRECTION PAD: MOVEMENT\"},{\"PAUSE AND EXIT\",\"RIGHT SOFTKEY: PAUSE MENU\",\"CHOOSE RESUME OR CONFIRM EXIT.\"},{\"AUDIO\",\"SIDE KEYS ADJUST VOLUME.\",\"THE LOWEST LEVEL MUTES PLAYBACK.\"},{\"DISPLAY\",\"M1: BRIGHTER   M3: DIMMER\",\"PAUSE > SETTINGS CHANGES SCREEN MODE.\"},{\"OVERLAYS\",\"FPS AND BATTERY VOLTAGE ARE OPTIONAL.\",\"TOGGLE THEM IN PAUSE > SETTINGS.\"},{\"SAVING\",\"USE THE ORIGINAL GAME SAVE MENU.\",\"WAIT UNTIL THE SAVE PROGRESS FINISHES.\"},{\"ORIGINAL GAMEPLAY\",\"ORIGINAL STARTERS, ENCOUNTERS AND EXP.\",\"NO CUSTOM POKEMON OR SAVE INCLUDED.\"}\n};\n"
+        }
+      ]
+    },
+    {
+      "path": "rp2350/bios.c",
+      "source_sha256": "57aa60b25c56f865d58ce3382ca8128b72b2a5ba360e3b676663080f22cbcf89",
+      "result_sha256": "95b5b13217a8e4a88d4fadc735e2bb0941bfe2543bf83bc3c6432b604d248c3f",
+      "edits": [
+        {
+          "start": 134,
+          "end": 135,
+          "replacement": "// BIOS rotation: 0x10000 per turn, 8.8 scale; multiply each matrix row by its axis scale.\n/* Exact memoization at the portable BIOS boundary. Original floating-point\n * operations remain the sole producer on a miss; no rounded lookup table,\n * approximate trigonometry is introduced. The angle/scale units follow the GBA BIOS.\n * AffineTerms is synchronous on the game's single cooperative thread. */\nstruct PeaqAffineMemo {\n    s16 sx, sy;\n    u16 rotation, valid;\n    s32 pa, pb, pc, pd;\n};\nstatic struct PeaqAffineMemo peaq_affine_memo[8];\nstatic unsigned peaq_affine_next;\n\n"
+        },
+        {
+          "start": 138,
+          "end": 139,
+          "replacement": "    for (unsigned i = 0; i < 8; ++i) {\n        const struct PeaqAffineMemo *m = &peaq_affine_memo[i];\n        if (m->valid && m->sx == xScale && m->sy == yScale && m->rotation == rotation) {\n            *pa = m->pa; *pb = m->pb; *pc = m->pc; *pd = m->pd;\n            return;\n        }\n    }\n    // GBA BIOS angles use a 16-bit full turn; the low byte is ignored.\n    float angle = (rotation >> 8) * (float)(2.0 * M_PI) / 256.0f;\n"
+        },
+        {
+          "start": 142,
+          "end": 144,
+          "replacement": "    *pb = (s32)(-s * xScale / 256.0f);\n    *pc = (s32)(s * yScale / 256.0f);\n"
+        },
+        {
+          "start": 145,
+          "end": 145,
+          "replacement": "    struct PeaqAffineMemo *m = &peaq_affine_memo[peaq_affine_next];\n    m->sx = xScale; m->sy = yScale; m->rotation = rotation;\n    m->pa = *pa; m->pb = *pb; m->pc = *pc; m->pd = *pd;\n    m->valid = 1;\n    peaq_affine_next = (peaq_affine_next + 1) & 7u;\n"
+        },
+        {
+          "start": 146,
+          "end": 146,
+          "replacement": "\n"
+        }
+      ]
+    },
+    {
+      "path": "rp2350/m4a_1.c",
+      "source_sha256": "48b96b6fc305ff1bda08105494dfeb452fc9a1f710c537902e2d230dc2825c10",
+      "result_sha256": "a2aa1c7deb9b67c90b1a95a8e279ae6558a116233a52661a48f68b8b610ccc90",
+      "edits": [
+        {
+          "start": 98,
+          "end": 99,
+          "replacement": "/* MP2K BDPCM/reverse sample playback. The cache belongs to one channel call,\n * so overlapping cries cannot reuse another voice's decoded block. The last\n * encoded block may be short (--no-pad); never read past wav->size. */\ntypedef struct {\n    u32 block;\n    s8 decoded[64];\n} PeaqDpcmBlock;\n\nstatic s32 PeaqWaveSample(const struct WaveData *wav, s32 index,\n                         PeaqDpcmBlock *cache)\n"
+        },
+        {
+          "start": 100,
+          "end": 102,
+          "replacement": "    static const s8 delta[16] = {0,1,4,9,16,25,36,49,-64,-49,-36,-25,-16,-9,-4,-1};\n    if (index < 0 || (u32)index >= wav->size)\n        return 0;\n    if (!wav->type)\n        return wav->data[index];\n    u32 block = (u32)index >> 6;\n    if (cache->block != block)\n    {\n        const u8 *src = (const u8 *)wav->data + block * 33;\n        u32 length = wav->size - block * 64;\n        if (length > 64) length = 64;\n        s32 sample = (s8)*src++;\n        cache->decoded[0] = sample;\n        for (u32 i = 1; i < length; ++i)\n        {\n            /* The first high nibble is unused. Thereafter: high, low. */\n            u32 packed = src[i >> 1];\n            u32 code = (i & 1) ? packed & 15 : packed >> 4;\n            sample = (s8)(sample + delta[code]);\n            cache->decoded[i] = sample;\n        }\n        cache->block = block;\n    }\n    return cache->decoded[(u32)index & 63];\n}\n\nstatic void SoundMainRAM_Unk1(struct SoundInfo *si, struct SoundChannel *chan,\n                             s8 *dma, s32 n)\n{\n    struct WaveData *wav = chan->wav;\n    const int reverse = (chan->type & TONEDATA_TYPE_REV) != 0;\n    const int compressed = wav->type != 0;\n    if (!(chan->statusFlags & SOUND_CHANNEL_SF_SPECIAL))\n    {\n        s32 offset = chan->currentPointer - wav->data;\n        if (reverse) offset = wav->size - offset;\n        chan->currentPointer = compressed ? (s8 *)(uintptr_t)offset : wav->data + offset;\n        chan->statusFlags |= SOUND_CHANNEL_SF_SPECIAL;\n    }\n    s32 pos = compressed ? (s32)(uintptr_t)chan->currentPointer : chan->currentPointer - wav->data;\n    if (reverse) --pos;\n    s32 count = chan->count;\n    u32 fw = chan->fw;\n    u32 inc = (chan->type & TONEDATA_TYPE_FIX) ? 0x800000u : (u32)si->divFreq * chan->frequency;\n    s32 loop = (!reverse && (chan->statusFlags & SOUND_CHANNEL_SF_LOOP) && wav->loopStart < wav->size) ? wav->size - wav->loopStart : 0;\n    PeaqDpcmBlock cache;cache.block = ~0u;\n    for (s32 i = 0; i < n && count > 0; ++i)\n    {\n        s32 base = PeaqWaveSample(wav,pos,&cache);\n        s32 next = PeaqWaveSample(wav,pos+(reverse ? -1 : 1),&cache);\n        s32 value = base + (s32)(((s64)(s32)fw * (next-base)) >> 23);\n        dma[i] = (s8)(dma[i] + ((chan->envelopeVolumeRight * value) >> 8));\n        dma[i+PCM_DMA_BUF_SIZE] = (s8)(dma[i+PCM_DMA_BUF_SIZE] + ((chan->envelopeVolumeLeft * value) >> 8));\n        fw += inc;\n        u32 advance = fw >> 23;\n        fw &= ~0x3f800000u;\n        if (!advance) continue;\n        count -= advance;\n        pos += reverse ? -(s32)advance : (s32)advance;\n        if (count <= 0)\n        {\n            if (!loop) { chan->statusFlags = 0; count = 0; break; }\n            do { count += loop; } while (count <= 0);\n            pos = wav->size - count;\n        }\n    }\n    chan->fw = fw;chan->count = count;\n    if (reverse) ++pos;\n    chan->currentPointer = compressed ? (s8 *)(uintptr_t)pos : wav->data + pos;\n"
+        },
+        {
+          "start": 229,
+          "end": 230,
+          "replacement": "        SoundMainRAM_Unk1(si, chan, dma, n);\n"
+        },
+        {
+          "start": 308,
+          "end": 309,
+          "replacement": "    // src is the interpolation lookahead, not the current base sample.\n    // Match m4a_1.s: subtract one before retaining r3 for the next frame.\n    chan->currentPointer = src - 1;\n"
+        },
+        {
+          "start": 335,
+          "end": 336,
+          "replacement": "void PeaqAudioMix(void)\n"
+        },
+        {
+          "start": 423,
+          "end": 423,
+          "replacement": "\n/* Song streams live in the linked image; only cry streams are generated in\n * RAM. Checking this boundary also rejects a pointer into unrelated globals. */\nextern const u8 __peaq_image_start[], __peaq_image_end[];\nu32 peaq_audio_guard[8];\nstatic u32 peaq_last_command;\nstatic int PeaqSongBytes(const u8 *p,u32 n){\n    uintptr_t a=(uintptr_t)p,lo=(uintptr_t)__peaq_image_start,hi=(uintptr_t)__peaq_image_end;\n    if(a>=lo&&a<=hi&&n<=hi-a)return 1;\n    lo=(uintptr_t)gPokemonCrySongs;hi=lo+sizeof(struct PokemonCrySong)*MAX_POKEMON_CRIES;\n    return a>=lo&&a<=hi&&n<=hi-a;\n}\nstatic void PeaqBadTrack(struct MusicPlayerInfo *mi,struct MusicPlayerTrack *tr,u32 reason,const u8 *p){\n    if(!peaq_audio_guard[0]){\n        peaq_audio_guard[1]=reason;peaq_audio_guard[2]=(uintptr_t)p;\n        peaq_audio_guard[3]=peaq_last_command;peaq_audio_guard[4]=(uintptr_t)tr;\n        peaq_audio_guard[5]=mi?(uintptr_t)mi->songHeader:0;\n        peaq_audio_guard[6]=tr->runningStatus;peaq_audio_guard[7]=tr->patternLevel;\n    }\n    if(peaq_audio_guard[0]!=0xffffffffu)++peaq_audio_guard[0];\n    /* Stop only this track. Other music, game logic and save state survive. */\n    ply_fine(mi,tr);\n}\n\n"
+        },
+        {
+          "start": 425,
+          "end": 425,
+          "replacement": "    if(!PeaqSongBytes(track->cmdPtr,1)){PeaqBadTrack(NULL,track,2,track->cmdPtr);return 0;}\n"
+        },
+        {
+          "start": 446,
+          "end": 446,
+          "replacement": "    if(!PeaqSongBytes(p,4)){PeaqBadTrack(mplayInfo,track,3,p);return;}\n"
+        },
+        {
+          "start": 447,
+          "end": 447,
+          "replacement": "    if(!PeaqSongBytes((u8 *)(uintptr_t)addr,1)){PeaqBadTrack(mplayInfo,track,4,(u8 *)(uintptr_t)addr);return;}\n"
+        },
+        {
+          "start": 471,
+          "end": 471,
+          "replacement": "        if(level>=3||!PeaqSongBytes(track->patternStack[level],1)){PeaqBadTrack(mplayInfo,track,5,track->cmdPtr);return;}\n"
+        },
+        {
+          "start": 477,
+          "end": 477,
+          "replacement": "    if(!PeaqSongBytes(track->cmdPtr,5)){PeaqBadTrack(mplayInfo,track,6,track->cmdPtr);return;}\n"
+        },
+        {
+          "start": 704,
+          "end": 705,
+          "replacement": "    // Original ply_note (_081DDB80.._081DDB9C): only rhythm banks\n    // replace the played key. A split bank selects a sample, preserving the\n    // melody's key; its sample's key field is not a pitch override.\n    u8 keyForFreq = (type & TONEDATA_TYPE_RHY) ? tone->key : track->key;\n"
+        },
+        {
+          "start": 785,
+          "end": 785,
+          "replacement": "    chan->midiKey = track->key;\n    chan->velocity = track->velocity;\n"
+        },
+        {
+          "start": 881,
+          "end": 881,
+          "replacement": "                u32 commandBudget=1024;\n"
+        },
+        {
+          "start": 883,
+          "end": 883,
+          "replacement": "                    if(!commandBudget--||!PeaqSongBytes(track->cmdPtr,1)){PeaqBadTrack(mplayInfo,track,1,track->cmdPtr);break;}\n                    peaq_last_command=(uintptr_t)track->cmdPtr;\n"
+        },
+        {
+          "start": 887,
+          "end": 887,
+          "replacement": "                        if(cmd<0xBD){PeaqBadTrack(mplayInfo,track,7,track->cmdPtr);break;}\n"
+        },
+        {
+          "start": 902,
+          "end": 902,
+          "replacement": "                        if(cmd==0xCD){\n                            if(!PeaqSongBytes(track->cmdPtr,1)||track->cmdPtr[0]>=14){PeaqBadTrack(mplayInfo,track,8,track->cmdPtr);break;}\n                            static const u8 sizes[14]={0,4,1,0,1,1,1,1,1,1,1,1,2,4};\n                            if(!PeaqSongBytes(track->cmdPtr,1u+sizes[track->cmdPtr[0]])){PeaqBadTrack(mplayInfo,track,9,track->cmdPtr);break;}\n                        }\n"
+        },
+        {
+          "start": 1058,
+          "end": 1058,
+          "replacement": "\n/* The host clock owns mixing; VBlank/game steps must not advance it. */\nvoid SoundMain(void) {}\n"
+        }
+      ]
+    },
+    {
+      "path": "src/trainer_card.c",
+      "source_sha256": "8bc7dfdd8fb8e110c2af12ba5ab73d39f10328e5fc14f21ad71b727ad5d91a44",
+      "result_sha256": "c2b10d8a498d2318138dd0b55a2c685b9013fc290d0627f10f5d45f9fc565452",
+      "edits": [
+        {
+          "start": 361,
+          "end": 361,
+          "replacement": "    // The cooperative frame invokes display callbacks after RunTasks.\n    // Drop their references before freeing the card and its windows.\n    SetVBlankCallback(NULL);\n    SetHBlankCallback(NULL);\n"
+        }
+      ]
+    },
+    {
+      "path": "src/battle_controllers.c",
+      "source_sha256": "b227e410ef40c9c83384b0de6150b2af298359f713ce57620aae45b1cc579665",
+      "result_sha256": "4dd7388f7774b5fc87d89e91a86adf61708c0fb1c7809204673be1105dd6225f",
+      "edits": [
+        {
+          "start": 1386,
+          "end": 1387,
+          "replacement": "        // Opponent, partner and canceled selections intentionally omit\n        // the optional order. Their consumers use only partyId.\n        sBattleBuffersTransferData[2 + i] = battlePartyOrder != NULL ? battlePartyOrder[i] : 0;\n"
+        }
+      ]
+    },
+    {
+      "path": "src/dma3_manager.c",
+      "source_sha256": "817a066fce3dbd8d6d5cac891f4988c0de0c9ada28d0776198a8248b3db33a6c",
+      "result_sha256": "93d3d8fc9c404392a44cef14dbccdc9b4ae9643317bafb4da9534736f6442880",
+      "edits": [
+        {
+          "start": 164,
+          "end": 164,
+          "replacement": "#if PEAQ_EMERALD_RELOCATABLE\n    /* A busy-polling original callback cannot yield to our cooperative\n     * VBlank. Complete the existing bounded software-copy queue here;\n     * its lock, ordering and per-service byte budget remain enforced.\n     * The software PPU only observes VRAM when the callback returns. */\n    ProcessDma3Requests();\n#endif\n"
+        }
+      ]
+    },
+    {
+      "path": "src/battle_transition.c",
+      "source_sha256": "9f6825be48051f1f7947815e1c49ea8027bb779b6bf8883c9016537d83439d52",
+      "result_sha256": "e942f529fd9237cf5ff911c705cecf0fe51da9644bd77a496baf98e3328d264c",
+      "edits": [
+        {
+          "start": 1045,
+          "end": 1045,
+          "replacement": "#if PEAQ_EMERALD_RELOCATABLE\n        /* Every transition shares this owner. The cooperative VBlank\n         * runs after its caller, so retire callbacks before their data. */\n        SetVBlankCallback(NULL);\n        SetHBlankCallback(NULL);\n#endif\n"
+        }
+      ]
+    },
+    {
+      "path": "src/sound.c",
+      "source_sha256": "4e577776d5f3d4b1c88ca541adf6544b162f181b1f949f321ff1e6d7190d5a7f",
+      "result_sha256": "0aa4198414104ef34e33c627b6a6ec4c6a43f47d9c57675099206aa69145285c",
+      "edits": [
+        {
+          "start": 607,
+          "end": 608,
+          "replacement": "#if WASM || (RP2350 && !defined(PEAQ_EMERALD_RELOCATABLE))\n"
+        },
+        {
+          "start": 629,
+          "end": 630,
+          "replacement": "#if WASM || (RP2350 && !defined(PEAQ_EMERALD_RELOCATABLE))\n"
+        }
+      ]
+    },
+    {
+      "path": "src/naming_screen.c",
+      "source_sha256": "736ab9fc387ff565a28a42947b1eb690f7fd8e9d899aede2602eebf1dea3d535",
+      "result_sha256": "25b8b2a1aa7971e1b6357ac22e05df214740d294dd5d6473b8b08f221431da7a",
+      "edits": [
+        {
+          "start": 695,
+          "end": 695,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\nstatic void CB2_FinishNamingScreen(void)\n{\n    MainCallback next = sNamingScreen->returnCallback;\n    if (sNamingScreen->templateNum == NAMING_SCREEN_PLAYER)\n        SeedRngAndSetTrainerId();\n    /* The returning battle does not recreate its sprites immediately.\n     * Retire the exclusive naming-screen tasks/sprites before its owner. */\n    ResetTasks();\n    ResetSpriteData();\n    FreeAllSpritePalettes();\n    FreeAllWindowBuffers();\n    FREE_AND_SET_NULL(sNamingScreen);\n    SetMainCallback2(next);\n}\n#endif\n\n"
+        },
+        {
+          "start": 699,
+          "end": 699,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\n        SetVBlankCallback(NULL);\n        SetHBlankCallback(NULL);\n        SetMainCallback2(CB2_FinishNamingScreen);\n        DestroyTask(FindTaskIdByFunc(Task_NamingScreen));\n#else\n"
+        },
+        {
+          "start": 705,
+          "end": 705,
+          "replacement": "#endif\n"
+        }
+      ]
+    },
+    {
+      "path": "src/pokemon_storage_system.c",
+      "source_sha256": "430014bd9b8fafc1560bb285a39b28e3fd601f100576240774f3ae287cd3abed",
+      "result_sha256": "b605c5294bf6342503c85708f8dc11060f6440be55ad519a3cc32cc8b4444a7c",
+      "edits": [
+        {
+          "start": 3730,
+          "end": 3730,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\nstatic void CB2_ChangeStorageScreen(void);\n\n"
+        },
+        {
+          "start": 3731,
+          "end": 3731,
+          "replacement": "{\n    // Keep storage alive until the current task/sprite frame has finished.\n    SetVBlankCallback(NULL);\n    SetHBlankCallback(NULL);\n    SetMainCallback2(CB2_ChangeStorageScreen);\n    DestroyTask(taskId);\n}\n\nstatic void CB2_ChangeStorageScreen(void)\n#else\nstatic void Task_ChangeScreen(u8 taskId)\n#endif\n"
+        },
+        {
+          "start": 3769,
+          "end": 3769,
+          "replacement": "#ifndef PEAQ_EMERALD_RELOCATABLE\n"
+        },
+        {
+          "start": 3770,
+          "end": 3770,
+          "replacement": "#endif\n"
+        }
+      ]
+    },
+    {
+      "path": "src/berry_blender.c",
+      "source_sha256": "870a4af4919e9cd2b1708f373ed380f52be54151b9d9936ded8eaa579be468b8",
+      "result_sha256": "7f084706e2b5bd7a6f926e5db88728ed44ffede7f929896a9e15724b1288427f",
+      "edits": [
+        {
+          "start": 2906,
+          "end": 2906,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\n                SetVBlankCallback(NULL);\n                SetHBlankCallback(NULL);\n#endif\n"
+        },
+        {
+          "start": 2926,
+          "end": 2926,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\n            SetVBlankCallback(NULL);\n            SetHBlankCallback(NULL);\n#endif\n"
+        },
+        {
+          "start": 2932,
+          "end": 2932,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\n    // The outgoing screen has released state; do not run its tasks/sprites.\n    if (sBerryBlender == NULL)\n        return;\n#endif\n"
+        },
+        {
+          "start": 2982,
+          "end": 2982,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\n            SetVBlankCallback(NULL);\n            SetHBlankCallback(NULL);\n#endif\n"
+        },
+        {
+          "start": 2987,
+          "end": 2987,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\n    // The outgoing screen has released state; do not run its tasks/sprites.\n    if (sBerryBlender == NULL)\n        return;\n#endif\n"
+        }
+      ]
+    },
+    {
+      "path": "src/slot_machine.c",
+      "source_sha256": "8c595c19a54f866c02c57e226233f44b3014f76dc821a15454713ac49152e837",
+      "result_sha256": "4202b861b8577486e273a39c2f828e70b584d37d3ea480a818cf8fa4b1108fc6",
+      "edits": [
+        {
+          "start": 1744,
+          "end": 1744,
+          "replacement": "static void CB2_FreeSlotMachine(void)\n{\n    SetMainCallback2(sSlotMachine->prevMainCb);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Reel);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Time);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Insert);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Stop);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Win);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Lose);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Bonus);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Big);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Reg);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_AButton);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Smoke);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Number);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_Pokeball);\n    FREE_AND_SET_NULL(sImageTable_DigitalDisplay_DPad);\n    TRY_FREE_AND_SET_NULL(sImageTable_ReelTimePikachu);\n    TRY_FREE_AND_SET_NULL(sImageTable_ReelTimeMachineAntennae);\n    TRY_FREE_AND_SET_NULL(sImageTable_ReelTimeMachine);\n    TRY_FREE_AND_SET_NULL(sImageTable_BrokenReelTimeMachine);\n    FREE_AND_SET_NULL(sMenuGfx);\n    FREE_AND_SET_NULL(sSelectedPikaPowerTile);\n    FREE_AND_SET_NULL(sReelOverlay_Tilemap);\n    FREE_AND_SET_NULL(sDigitalDisplayGfxPtr);\n    FREE_AND_SET_NULL(sReelTimeGfxPtr);\n    FREE_AND_SET_NULL(sReelButtonPress_Tilemap);\n    FREE_AND_SET_NULL(sReelBackground_Gfx);\n    FREE_AND_SET_NULL(sReelBackgroundSpriteSheet);\n    FREE_AND_SET_NULL(sSlotMachineSpritesheetsPtr);\n    FREE_AND_SET_NULL(sSlotMachine);\n}\n\n"
+        },
+        {
+          "start": 1748,
+          "end": 1777,
+          "replacement": "#ifdef PEAQ_EMERALD_RELOCATABLE\n        // Remaining reel/display tasks and sprites still need this state.\n        // Release it as a standalone main callback on the following frame.\n        SetVBlankCallback(NULL);\n        SetHBlankCallback(NULL);\n        SetMainCallback2(CB2_FreeSlotMachine);\n#else\n        CB2_FreeSlotMachine();\n#endif\n"
+        }
+      ]
+    },
+    {
+      "path": "include/gba/defines.h",
+      "source_sha256": "f6fde0225fbb6e77fcc0d160cc63f4e34f5fa81b80d2d6aa35035d2f4a9fa3ef",
+      "result_sha256": "4409c43722fc09f1cf8890662cc07f8c42f21e7c61e1a5a1f0ce4de4bb470c8c",
+      "edits": [
+        {
+          "start": 0,
+          "end": 0,
+          "replacement": "#include \"peaq_memory_map.h\"\n"
+        },
+        {
+          "start": 26,
+          "end": 32,
+          "replacement": "#define EWRAM_START PEAQ_EWRAM\n#define IWRAM_START PEAQ_IWRAM\n#define VRAM PEAQ_VRAM\n#define PLTT PEAQ_PALETTE\n#define OAM PEAQ_OAM\n#define REG_BASE PEAQ_REGISTERS\n"
+        }
+      ]
+    },
+    {
+      "path": "include/gba/flash_internal.h",
+      "source_sha256": "5849c691200b3b5dbb0d3921ca9740e7dd20d174936ab0ab8670d6e48122f8e5",
+      "result_sha256": "116cea9ad7687befa6b51591f449b2e5d3dc23f44c472cfd075dcbf6be04245e",
+      "edits": [
+        {
+          "start": 0,
+          "end": 0,
+          "replacement": "#include \"peaq_memory_map.h\"\n"
+        },
+        {
+          "start": 12,
+          "end": 13,
+          "replacement": "#define FLASH_BASE ((u8 *)PEAQ_SAVE)\n"
+        }
+      ]
+    },
+    {
+      "path": "include/gba/m4a_internal.h",
+      "source_sha256": "40936cbac9a2ad96da8aebd52e5c9d8e3bbee624e6dcb51e0436f29ef65edd74",
+      "result_sha256": "7228ece27bed1895aaf7ca6dfff48adffcd2bf0c7fdc18c4cafe3ef809a358e4",
+      "edits": [
+        {
+          "start": 408,
+          "end": 410,
+          "replacement": "#define NUM_MUSIC_PLAYERS 4u\n#define MAX_LINES 0u\n"
+        }
+      ]
+    }
+  ]
+}

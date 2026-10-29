@@ -1,0 +1,8 @@
+{
+  "description": "Compatibility constants for the development handset's retained-request OS boot gate; this file does not verify an installed phone.",
+  "bridge_base": 2170002944,
+  "gate_profile": 1904282498,
+  "os_body_bytes": 12020200,
+  "game_folder": "Smaragd",
+  "qualified_firmware_required": true
+}

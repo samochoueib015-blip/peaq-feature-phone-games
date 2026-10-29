@@ -1,0 +1,130 @@
+[
+  {
+    "object": "common",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/common.c"
+  },
+  {
+    "object": "data_cache",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/data_cache.c"
+  },
+  {
+    "object": "data_cache_cpu",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/data_cache_cpu.s"
+  },
+  {
+    "object": "engine_speed_probe",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/engine_speed_probe.c"
+  },
+  {
+    "object": "frame_schedule",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/frame_schedule.c"
+  },
+  {
+    "object": "icache_cpu",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/icache_cpu.s"
+  },
+  {
+    "object": "icache_fault",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/icache_fault.s"
+  },
+  {
+    "object": "icache_start",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/icache_start.s"
+  },
+  {
+    "object": "large_save",
+    "source": "ports/emerald/runtime/menu-play-v32/large_save.c"
+  },
+  {
+    "object": "lcd_board",
+    "source": "ports/emerald/runtime/menu-play-v21/lcd_board.c"
+  },
+  {
+    "object": "module",
+    "source": "ports/emerald/runtime/menu-play-v33/module.c"
+  },
+  {
+    "object": "sd_fat_probe",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/sd_fat_probe.c"
+  },
+  {
+    "object": "shared_pins",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/shared_pins.c"
+  },
+  {
+    "object": "support",
+    "source": "ports/emerald/runtime/adaptive-interactive-v1/support.c"
+  },
+  {
+    "object": "cold_save",
+    "source": "ports/emerald/runtime/menu-play-v30/cold_save.c"
+  },
+  {
+    "object": "game_controls",
+    "source": "ports/emerald/runtime/menu-play-v21/game_controls.c"
+  },
+  {
+    "object": "runtime_saved",
+    "source": "ports/emerald/runtime/menu-play-v33/runtime_saved.c"
+  },
+  {
+    "object": "game_key_input",
+    "source": "ports/emerald/runtime/saved-interactive-v1/game_key_input.c"
+  },
+  {
+    "object": "menu_exit",
+    "source": "ports/emerald/runtime/menu-play-v32/menu_exit.c"
+  },
+  {
+    "object": "cold_reset",
+    "source": "ports/emerald/runtime/menu-play-v5/cold_reset.c"
+  },
+  {
+    "object": "cold_audio",
+    "source": "ports/emerald/runtime/menu-play-v23/cold_audio.c"
+  },
+  {
+    "object": "audio_stream",
+    "source": "ports/emerald/runtime/menu-play-v23/audio_stream.c"
+  },
+  {
+    "object": "cached_input_tables",
+    "source": "ports/emerald/runtime/menu-play-v25/cached_input_tables.c"
+  },
+  {
+    "object": "cold_display",
+    "source": "ports/emerald/runtime/menu-play-v25/cold_display.c"
+  },
+  {
+    "object": "menu_play",
+    "source": "ports/emerald/runtime/menu-play-v34/menu_play.c"
+  },
+  {
+    "object": "menu_loading",
+    "source": "ports/emerald/runtime/menu-play-v32/menu_loading.c"
+  },
+  {
+    "object": "sd_game_save",
+    "source": "ports/emerald/runtime/menu-play-v30/sd_game_save.c"
+  },
+  {
+    "object": "fat_report_map",
+    "source": "ports/emerald/runtime/menu-play-v30/fat_report_map.c"
+  },
+  {
+    "object": "interactive_keys_saved",
+    "source": "ports/emerald/runtime/menu-play-v6/interactive_keys_saved.c"
+  },
+  {
+    "object": "brightness_v21",
+    "source": "ports/emerald/runtime/menu-play-v21/brightness_v21.c"
+  },
+  {
+    "object": "menu_video_v25",
+    "source": "ports/emerald/runtime/menu-play-v29/menu_video_v25.c"
+  },
+  {
+    "object": "battery_v25",
+    "source": "ports/emerald/runtime/menu-play-v25/battery_v25.c"
+  }
+]

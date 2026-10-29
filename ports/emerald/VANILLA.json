@@ -1,0 +1,16 @@
+{
+  "gameplay": "original",
+  "language": "English",
+  "excluded": [
+    "EXP multiplier",
+    "whole-party EXP",
+    "custom encounter tables",
+    "trade evolution replacements",
+    "custom Pokedex areas",
+    "Charmander starter",
+    "shiny Mew egg",
+    "German localization",
+    "personal saves"
+  ],
+  "platform_repairs_retained": true
+}
